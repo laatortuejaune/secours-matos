@@ -1,9 +1,13 @@
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { PrismaClient } from "../src/generated/prisma/client.js";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
 
-const prisma = new PrismaClient();
+const url = process.env.TURSO_DATABASE_URL ?? "file:prisma/dev.db";
+const authToken = process.env.TURSO_AUTH_TOKEN;
+const adapter = new PrismaLibSql({ url, authToken });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  // Clean
   await prisma.checkupArticle.deleteMany();
   await prisma.checkup.deleteMany();
   await prisma.article.deleteMany();
@@ -11,7 +15,6 @@ async function main() {
   await prisma.sac.deleteMany();
   await prisma.stock.deleteMany();
 
-  // Stock central
   const compresses = await prisma.stock.create({
     data: {
       nom: "Compresses stériles 10x10",
@@ -54,27 +57,14 @@ async function main() {
     },
   });
 
-  // Sac PSE 1
-  const sac1 = await prisma.sac.create({
-    data: {
-      nom: "Sac PSE 1",
-    },
-  });
+  const sac1 = await prisma.sac.create({ data: { nom: "Sac PSE 1" } });
 
   const pocheAvant = await prisma.compartiment.create({
-    data: {
-      nom: "Poche avant",
-      sacId: sac1.id,
-      ordre: 1,
-    },
+    data: { nom: "Poche avant", sacId: sac1.id, ordre: 1 },
   });
 
   const compPrincipal = await prisma.compartiment.create({
-    data: {
-      nom: "Compartiment principal",
-      sacId: sac1.id,
-      ordre: 2,
-    },
+    data: { nom: "Compartiment principal", sacId: sac1.id, ordre: 2 },
   });
 
   await prisma.article.createMany({
@@ -98,11 +88,6 @@ async function main() {
         compartimentId: pocheAvant.id,
         stockId: ciseaux.id,
       },
-    ],
-  });
-
-  await prisma.article.createMany({
-    data: [
       {
         nom: "Bandes de crêpe 10cm",
         quantiteRequise: 5,
@@ -124,16 +109,11 @@ async function main() {
     ],
   });
 
-  console.log("Seed terminé !");
-  console.log("- 5 produits en stock (dont 1 en alerte stock bas : Gants nitrile)");
-  console.log("- 1 sac (PSE 1) avec 2 compartiments et 6 articles");
+  console.log("✅ Seed terminé !");
+  console.log("   - 5 produits en stock (dont 1 en alerte : Gants nitrile)");
+  console.log("   - 1 sac (PSE 1) avec 2 compartiments et 6 articles");
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(() => prisma.$disconnect());

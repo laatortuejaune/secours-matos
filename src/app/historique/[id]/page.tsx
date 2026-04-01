@@ -27,13 +27,6 @@ interface CheckupDetail {
   }>;
 }
 
-
-  ok: "bg-green-600",
-  manquant: "destructive",
-  perime: "bg-orange-500",
-  abime: "bg-yellow-500",
-
-
 export default function CheckupDetailPage() {
   const params = useParams();
   const checkupId = parseInt(params.id as string);

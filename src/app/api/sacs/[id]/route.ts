@@ -12,8 +12,15 @@ export async function GET(
     include: {
       compartiments: {
         orderBy: { ordre: "asc" },
-        include: { _count: { select: { articles: true } } },
+        include: {
+          _count: { select: { articles: true } },
+          articles: {
+            include: { stock: true },
+            orderBy: { id: "asc" },
+          },
+        },
       },
+      checkups: { orderBy: { date: "desc" }, take: 1, select: { date: true, id: true } },
     },
   });
   if (!sac) return NextResponse.json({ error: "Sac non trouvé" }, { status: 404 });
@@ -28,7 +35,12 @@ export async function PUT(
   const body = await request.json();
   const sac = await prisma.sac.update({
     where: { id: parseInt(id) },
-    data: { nom: body.nom, photo: body.photo },
+    data: {
+      nom: body.nom,
+      photo: body.photo ?? undefined,
+      localisation: body.localisation ?? undefined,
+      description: body.description ?? undefined,
+    },
   });
   return NextResponse.json(sac);
 }

@@ -18,10 +18,9 @@ export async function POST(request: NextRequest) {
   const { sacId, note, articles } = body as {
     sacId: number;
     note?: string;
-    articles: { articleId: number; quantiteTrouvee: number }[];
+    articles: { articleId: number; quantiteTrouvee: number; statut?: string; notes?: string }[];
   };
 
-  // Get all articles with their stock info
   const articleIds = articles.map((a) => a.articleId);
   const dbArticles = await prisma.article.findMany({
     where: { id: { in: articleIds } },
@@ -31,7 +30,6 @@ export async function POST(request: NextRequest) {
   const articleMap = new Map(dbArticles.map((a) => [a.id, a]));
   const prelevements: { stockId: number; stockNom: string; quantite: number; disponible: number }[] = [];
 
-  // Create checkup
   const checkup = await prisma.checkup.create({
     data: {
       sacId,
@@ -43,11 +41,14 @@ export async function POST(request: NextRequest) {
             0,
             (dbArticle?.quantiteRequise || 0) - a.quantiteTrouvee
           );
+          const statut = a.statut || (quantiteManquante > 0 ? "manquant" : "ok");
           return {
             articleId: a.articleId,
             quantiteTrouvee: a.quantiteTrouvee,
             quantiteManquante,
-            quantitePrelevee: 0, // will be updated below
+            quantitePrelevee: 0,
+            statut,
+            notes: a.notes || null,
           };
         }),
       },
@@ -55,7 +56,6 @@ export async function POST(request: NextRequest) {
     include: { checkupArticles: true },
   });
 
-  // Debit stock for missing items
   for (const ca of checkup.checkupArticles) {
     const dbArticle = articleMap.get(ca.articleId);
     if (ca.quantiteManquante > 0 && dbArticle?.stockId && dbArticle.stock) {
@@ -79,7 +79,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Refetch the complete checkup
   const result = await prisma.checkup.findUnique({
     where: { id: checkup.id },
     include: {

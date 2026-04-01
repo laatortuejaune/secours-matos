@@ -8,13 +8,16 @@ datasource db {
 }
 
 model Sac {
-  id        Int      @id @default(autoincrement())
-  nom       String
-  photo     String?
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  nom          String
+  photo        String?
+  localisation String?
+  description  String?
+  createdAt    DateTime @default(now())
 
   compartiments Compartiment[]
   checkups      Checkup[]
+  interventions Intervention[]
 }
 
 model Compartiment {
@@ -66,13 +69,27 @@ model Checkup {
 }
 
 model CheckupArticle {
-  id                Int @id @default(autoincrement())
+  id                Int    @id @default(autoincrement())
   checkupId         Int
   articleId         Int
-  quantiteTrouvee   Int @default(0)
-  quantiteManquante Int @default(0)
-  quantitePrelevee  Int @default(0)
+  quantiteTrouvee   Int    @default(0)
+  quantiteManquante Int    @default(0)
+  quantitePrelevee  Int    @default(0)
+  statut            String @default("ok")
+  notes             String?
 
   checkup Checkup @relation(fields: [checkupId], references: [id], onDelete: Cascade)
   article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model Intervention {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  lieu        String
+  description String?
+  responsable String?
+  sacId       Int
+  createdAt   DateTime @default(now())
+
+  sac Sac @relation(fields: [sacId], references: [id], onDelete: Cascade)
 }

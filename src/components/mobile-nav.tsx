@@ -17,6 +17,8 @@ import {
   Package,
   History,
   ClipboardCheck,
+  Siren,
+  BarChart3,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -25,6 +27,8 @@ const links = [
   { href: "/sacs", label: "Sacs", icon: Backpack },
   { href: "/stock", label: "Stock central", icon: Package },
   { href: "/historique", label: "Historique", icon: History },
+  { href: "/interventions", label: "Interventions", icon: Siren },
+  { href: "/statistiques", label: "Statistiques", icon: BarChart3 },
 ];
 
 export function MobileNav() {

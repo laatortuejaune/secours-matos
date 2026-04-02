@@ -21,10 +21,12 @@ export async function GET(
         },
       },
       checkups: { orderBy: { date: "desc" }, take: 1, select: { date: true, id: true } },
+      scelles: { where: { actif: true }, orderBy: { date: "desc" }, take: 1 },
     },
   });
   if (!sac) return NextResponse.json({ error: "Sac non trouvé" }, { status: 404 });
-  return NextResponse.json(sac);
+  const { checkups, ...rest } = sac;
+  return NextResponse.json({ ...rest, dernierCheckup: checkups[0]?.date ?? null });
 }
 
 export async function PUT(
@@ -40,6 +42,7 @@ export async function PUT(
       photo: body.photo ?? undefined,
       localisation: body.localisation ?? undefined,
       description: body.description ?? undefined,
+      vehiculeId: body.vehiculeId !== undefined ? (body.vehiculeId ? parseInt(body.vehiculeId) : null) : undefined,
     },
   });
   return NextResponse.json(sac);

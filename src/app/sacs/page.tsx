@@ -12,7 +12,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { PhotoUpload } from "@/components/photo-upload";
-import { Plus, Backpack, ClipboardCheck, Trash2, MapPin } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Plus, Backpack, ClipboardCheck, Trash2, MapPin, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -24,8 +27,11 @@ interface Sac {
   localisation: string | null;
   statut: "ok" | "attention" | "critique" | "inconnu";
   dernierCheckup: string | null;
+  vehicule: { id: number; nom: string } | null;
   _count: { compartiments: number; checkups: number };
 }
+
+interface Vehicule { id: number; nom: string; }
 
 function StatutBadge({ statut }: { statut: string }) {
   if (statut === "ok") return <Badge className="bg-green-600 text-white">OK</Badge>;
@@ -36,22 +42,27 @@ function StatutBadge({ statut }: { statut: string }) {
 
 export default function SacsPage() {
   const [sacs, setSacs] = useState<Sac[]>([]);
+  const [vehicules, setVehicules] = useState<Vehicule[]>([]);
   const [open, setOpen] = useState(false);
   const [nom, setNom] = useState("");
   const [localisation, setLocalisation] = useState("");
+  const [vehiculeId, setVehiculeId] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
 
   const fetchSacs = () => fetch("/api/sacs").then((r) => r.json()).then(setSacs);
-  useEffect(() => { fetchSacs(); }, []);
+  useEffect(() => {
+    fetchSacs();
+    fetch("/api/vehicules").then((r) => r.json()).then(setVehicules);
+  }, []);
 
   async function handleCreate() {
     if (!nom.trim()) return;
     await fetch("/api/sacs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nom, photo, localisation: localisation || null }),
+      body: JSON.stringify({ nom, photo, localisation: localisation || null, vehiculeId: vehiculeId || null }),
     });
-    setNom(""); setLocalisation(""); setPhoto(null); setOpen(false);
+    setNom(""); setLocalisation(""); setVehiculeId(""); setPhoto(null); setOpen(false);
     toast.success("Sac créé");
     fetchSacs();
   }
@@ -83,6 +94,18 @@ export default function SacsPage() {
                 <Label htmlFor="loc">Localisation</Label>
                 <Input id="loc" value={localisation} onChange={(e) => setLocalisation(e.target.value)} placeholder="Ex: Véhicule 1, Entrepôt..." />
               </div>
+              {vehicules.length > 0 && (
+                <div>
+                  <Label>Véhicule associé</Label>
+                  <Select value={vehiculeId} onValueChange={setVehiculeId}>
+                    <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Aucun</SelectItem>
+                      {vehicules.map((v) => <SelectItem key={v.id} value={String(v.id)}>{v.nom}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <Label>Photo</Label>
                 <PhotoUpload onUpload={setPhoto} onRemove={() => setPhoto(null)} />
@@ -119,6 +142,11 @@ export default function SacsPage() {
                       {sac.localisation && (
                         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                           <MapPin className="h-3 w-3" />{sac.localisation}
+                        </p>
+                      )}
+                      {sac.vehicule && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <Truck className="h-3 w-3" />{sac.vehicule.nom}
                         </p>
                       )}
                       <p className="text-sm text-muted-foreground">{sac._count.compartiments} compartiment(s)</p>

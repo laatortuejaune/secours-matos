@@ -19,16 +19,22 @@ import {
   ClipboardCheck,
   Siren,
   BarChart3,
+  Truck,
+  ClipboardList,
+  Droplets,
 } from "lucide-react";
 import { useState } from "react";
 
 const links = [
-  { href: "/", label: "Tableau de bord", icon: LayoutDashboard },
+  { href: "/", label: "Accueil", icon: LayoutDashboard },
+  { href: "/vehicules", label: "Véhicules", icon: Truck },
   { href: "/sacs", label: "Sacs", icon: Backpack },
-  { href: "/stock", label: "Stock central", icon: Package },
+  { href: "/taches", label: "Tâches", icon: ClipboardList },
+  { href: "/hygiene", label: "Hygiène", icon: Droplets },
+  { href: "/stock", label: "Stock", icon: Package },
   { href: "/historique", label: "Historique", icon: History },
   { href: "/interventions", label: "Interventions", icon: Siren },
-  { href: "/statistiques", label: "Statistiques", icon: BarChart3 },
+  { href: "/statistiques", label: "Stats", icon: BarChart3 },
 ];
 
 export function MobileNav() {

@@ -13,7 +13,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { PhotoUpload } from "@/components/photo-upload";
-import { Plus, ArrowLeft, FolderOpen, Trash2, Printer, QrCode, ClipboardCheck, MapPin } from "lucide-react";
+import { Plus, ArrowLeft, FolderOpen, Trash2, Printer, QrCode, ClipboardCheck, MapPin, Shield, Truck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -28,11 +29,16 @@ interface Compartiment {
   articles: Article[];
   _count: { articles: number };
 }
+interface Scelle {
+  id: number; numero: string; posePar: string | null; date: string; actif: boolean;
+}
 interface Sac {
   id: number; nom: string; photo: string | null;
   localisation: string | null; description: string | null;
+  vehiculeId: number | null;
   dernierCheckup: string | null;
   compartiments: Compartiment[];
+  scelles?: Scelle[];
 }
 
 export default function SacDetailPage() {
@@ -41,10 +47,13 @@ export default function SacDetailPage() {
   const [sac, setSac] = useState<Sac | null>(null);
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [scelleOpen, setScelleOpen] = useState(false);
   const [nom, setNom] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [editLoc, setEditLoc] = useState("");
   const [editDesc, setEditDesc] = useState("");
+  const [scelleNum, setScelleNum] = useState("");
+  const [scellePose, setScellePose] = useState("");
 
   const fetchSac = useCallback(() =>
     fetch(`/api/sacs/${sacId}`).then((r) => r.json()).then((data) => {
@@ -64,6 +73,18 @@ export default function SacDetailPage() {
     });
     setNom(""); setPhoto(null); setOpen(false);
     toast.success("Compartiment créé");
+    fetchSac();
+  }
+
+  async function handleScelleCreate() {
+    if (!scelleNum.trim()) return toast.error("Numéro requis");
+    await fetch("/api/scelles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sacId, numero: scelleNum, posePar: scellePose || null }),
+    });
+    setScelleNum(""); setScellePose(""); setScelleOpen(false);
+    toast.success("Scellé enregistré");
     fetchSac();
   }
 
@@ -106,6 +127,19 @@ export default function SacDetailPage() {
           <Link href={`/checkup/${sacId}`}>
             <Button variant="outline" size="sm"><ClipboardCheck className="h-4 w-4 mr-2" />Checkup</Button>
           </Link>
+          <Dialog open={scelleOpen} onOpenChange={setScelleOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm"><Shield className="h-4 w-4 mr-2" />Scellé</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Enregistrer un scellé</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div><Label>Numéro du scellé *</Label><Input value={scelleNum} onChange={(e) => setScelleNum(e.target.value)} placeholder="Ex: SC-2024-001" /></div>
+                <div><Label>Posé par</Label><Input value={scellePose} onChange={(e) => setScellePose(e.target.value)} placeholder="Nom de l'agent" /></div>
+                <Button className="w-full" onClick={handleScelleCreate}>Enregistrer</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Link href={`/sacs/${sacId}/imprimer`} target="_blank">
             <Button variant="outline" size="sm"><Printer className="h-4 w-4 mr-2" />Imprimer</Button>
           </Link>
@@ -128,6 +162,26 @@ export default function SacDetailPage() {
           </Dialog>
         </div>
       </div>
+
+      {/* Scellé actif */}
+      {sac.scelles && sac.scelles.length > 0 && (
+        <div className="flex items-center gap-2 text-sm bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-md p-3">
+          <Shield className="h-4 w-4 text-blue-600 flex-shrink-0" />
+          <span className="font-medium text-blue-700 dark:text-blue-400">Scellé actif :</span>
+          <span className="font-mono font-bold">{sac.scelles[0].numero}</span>
+          {sac.scelles[0].posePar && <span className="text-muted-foreground">par {sac.scelles[0].posePar}</span>}
+          <Badge variant="secondary" className="text-xs ml-auto">
+            {format(new Date(sac.scelles[0].date), "dd/MM/yyyy", { locale: fr })}
+          </Badge>
+        </div>
+      )}
+
+      {sac.vehiculeId && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Truck className="h-4 w-4" />
+          <Link href={`/vehicules/${sac.vehiculeId}`} className="hover:underline">Voir le véhicule associé</Link>
+        </div>
+      )}
 
       {sac.description && (
         <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{sac.description}</p>

@@ -39,6 +39,7 @@ export async function GET() {
       _count: { select: { compartiments: true, checkups: true } },
       compartiments: { include: { articles: { select: { datePeremption: true } } } },
       checkups: { orderBy: { date: "desc" }, take: 1, select: { date: true } },
+      vehicule: { select: { id: true, nom: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
       photo: body.photo || null,
       localisation: body.localisation || null,
       description: body.description || null,
+      vehiculeId: body.vehiculeId ? parseInt(body.vehiculeId) : null,
     },
   });
   return NextResponse.json(sac);

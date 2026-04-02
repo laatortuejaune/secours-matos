@@ -13,11 +13,30 @@ model Sac {
   photo        String?
   localisation String?
   description  String?
+  vehiculeId   Int?
   createdAt    DateTime @default(now())
 
+  vehicule      Vehicule?      @relation(fields: [vehiculeId], references: [id], onDelete: SetNull)
   compartiments Compartiment[]
   checkups      Checkup[]
   interventions Intervention[]
+  taches        Tache[]
+  scelles       Scelle[]
+}
+
+model Vehicule {
+  id              Int      @id @default(autoincrement())
+  nom             String
+  immatriculation String?
+  type            String   @default("autre")
+  statut          String   @default("operationnel")
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  sacs          Sac[]
+  taches        Tache[]
+  hygiene       ProtocoHygiene[]
+  carnetEntries CarnetBord[]
 }
 
 model Compartiment {
@@ -59,10 +78,11 @@ model Stock {
 }
 
 model Checkup {
-  id    Int      @id @default(autoincrement())
-  sacId Int
-  date  DateTime @default(now())
-  note  String?
+  id     Int      @id @default(autoincrement())
+  sacId  Int
+  date   DateTime @default(now())
+  note   String?
+  scelle String?
 
   sac             Sac              @relation(fields: [sacId], references: [id], onDelete: Cascade)
   checkupArticles CheckupArticle[]
@@ -92,4 +112,66 @@ model Intervention {
   createdAt   DateTime @default(now())
 
   sac Sac @relation(fields: [sacId], references: [id], onDelete: Cascade)
+}
+
+model Tache {
+  id           Int       @id @default(autoincrement())
+  titre        String
+  description  String?
+  statut       String    @default("en_cours")
+  priorite     String    @default("normale")
+  vehiculeId   Int?
+  sacId        Int?
+  assigneA     String?
+  dateEcheance DateTime?
+  dateCree     DateTime  @default(now())
+
+  vehicule Vehicule? @relation(fields: [vehiculeId], references: [id], onDelete: SetNull)
+  sac      Sac?      @relation(fields: [sacId], references: [id], onDelete: SetNull)
+}
+
+model ProtocoHygiene {
+  id            Int    @id @default(autoincrement())
+  nom           String
+  description   String?
+  frequenceDays Int    @default(7)
+  vehiculeId    Int?
+
+  vehicule Vehicule?       @relation(fields: [vehiculeId], references: [id], onDelete: SetNull)
+  records  HygieneRecord[]
+}
+
+model HygieneRecord {
+  id         Int      @id @default(autoincrement())
+  protocolId Int
+  date       DateTime @default(now())
+  agent      String
+  notes      String?
+  conforme   Boolean  @default(true)
+
+  protocol ProtocoHygiene @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+}
+
+model Scelle {
+  id      Int      @id @default(autoincrement())
+  sacId   Int
+  numero  String
+  date    DateTime @default(now())
+  posePar String?
+  actif   Boolean  @default(true)
+  notes   String?
+
+  sac Sac @relation(fields: [sacId], references: [id], onDelete: Cascade)
+}
+
+model CarnetBord {
+  id          Int      @id @default(autoincrement())
+  vehiculeId  Int
+  date        DateTime @default(now())
+  type        String
+  valeur      Float?
+  description String?
+  agent       String?
+
+  vehicule Vehicule @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
 }

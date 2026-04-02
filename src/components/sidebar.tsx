@@ -11,11 +11,17 @@ import {
   History,
   Siren,
   BarChart3,
+  Truck,
+  ClipboardList,
+  Droplets,
 } from "lucide-react";
 
 const links = [
   { href: "/", label: "Tableau de bord", icon: LayoutDashboard },
+  { href: "/vehicules", label: "Véhicules", icon: Truck },
   { href: "/sacs", label: "Sacs", icon: Backpack },
+  { href: "/taches", label: "Tâches", icon: ClipboardList },
+  { href: "/hygiene", label: "Hygiène", icon: Droplets },
   { href: "/stock", label: "Stock central", icon: Package },
   { href: "/historique", label: "Historique", icon: History },
   { href: "/interventions", label: "Interventions", icon: Siren },
